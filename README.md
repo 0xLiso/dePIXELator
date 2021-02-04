@@ -8,7 +8,7 @@ Fill this.
 # Some initial results:
 
 ### handsome guy...
-![first] (https://github.com/anlismon/dePIXELator/raw/main/imgs/test01.png "Test 1")
+![first](https://github.com/anlismon/dePIXELator/raw/main/imgs/test01.png "Test 1")
 
 ### just chating
 ![second] (https://github.com/anlismon/dePIXELator/raw/main/imgs/test02.png?raw=true "Test 2")
