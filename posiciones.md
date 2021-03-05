@@ -78,11 +78,37 @@ bp 1872:002A
 
 lo que hace con SN00005.VIP
 bp 16b2:02ae  <- función que lee el vip 
-open -> seek 20h -> seek#2 (a 0DF5B6A0) -> read 8 bytes [11 02 00 02 f0 d2 60 c0]
+
+open -> seek 20h 
+-> seek#2 (a 0DF5B6A0) 
+	0x0DF5B6A0 está en memoria : bpm 225c:7f1b  se lee en bp 1872:002a
+-> read 8 bytes [11 02 00 02 f0 d2 60 c0]
+
 
 -> hace cosas(_1368) 
 
--> read 211h bytes (2 primeros bytes de los 8 de antes) ->
+
+-> read 211h bytes (2 primeros bytes de los 8 de antes) -> Mirar donde guarda esto en memoria, así podremos ver la memoria mapeada.
+bp 16B2:0FD0 <- aqui funcion que lee, poner bpint 21 desde aqui.
+bp 16B2:155f  <- Creo que aqúí parsea el chunk
+bp 16B2:1153 <- o a lo mejor aquí.
+bp 16B2:11E7 <- Justo antes de llamar a 045a
+bp 1B6E:045A  <- Aqui lee la memoria del frame, y hace algo com VGA a000:0000-FFFF
+
+bp 16B2:15D5
+
+bp 1B6E:08A2 <-Parece que aqui pinta el frame accumulado
+
+16B2:15D5  8B1E4CA3            mov  bx,[A34C]              ds:[A34C]=0000      
+
+
+memoria header paleta: 225C:A380
+memoria paleta: 2F36:0004
+
+memoria header kifim: 225C:A380
+memoria kifrim 2F36:0215
+
+
 ...
 
 ->seek a 0df5b8b9 (hex(0x0DF5B6A0 + 0x211 +0x8))
