@@ -257,16 +257,26 @@ class VIPFile:
         else:
             raise StopIteration
 
+    def __getitem__(self, item):
+        items = []
+        if isinstance(item, int):
+            start, stop = item, item + 1
+        else:
+            start = item.start if item.start is not None else 0
+        stop = item.stop if item.stop is not None else len(self.chunks)
+        for i, frame in enumerate(self):
+            if i == stop:
+                break
+            if i >= start:
+                items.append(frame)
+        return items
+
 
 if __name__ == "__main__":
     v = VIPFile("SN00002.VIP", 0x0DF5B6A0, 10000)
 
-    counter = 0
-    for frame in v:
-        plt.imsave(f"frames/frame{counter}.png", frame)
-        if counter > 600:
-            break
-        counter += 1
+    for i, frame in enumerate(v[:600]):
+        plt.imsave(f"frames/frame{i}.png", frame)
 
     os.chdir("frames")
     subprocess.call(
@@ -276,6 +286,8 @@ if __name__ == "__main__":
             "frame%d.png",
             "-r",
             "25",
+            "-c:v",
+            "libx264",
             "video_name.mp4",
         ]
     )
