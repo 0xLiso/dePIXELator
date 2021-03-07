@@ -53,7 +53,7 @@ class Chunk:
                 elif b == 9:
                     return "🏂"
                 elif b == 3:
-                    return "❓"
+                    return "❓" # es keyframe
                 elif b == 0x0e:
                     return "❓❓❓"
         return "💩"
@@ -260,7 +260,20 @@ class VIPFile:
                 )
             elif chunk_type == "💣":
                 self.frame = [0] * self.video_width * self.video_height
+
+            elif chunk_type == "🏂":
+                self.frame = [0] * self.video_width * self.video_height
+            elif chunk_type == "❓":
+                self.frame = [1] * self.video_width * self.video_height
+            elif chunk_type == "❓❓❓":
+                self.frame = [2] * self.video_width * self.video_height
+            elif chunk_type == "🗝🗝🗝🗝🗝️":
+                self.frame = [3] * self.video_width * self.video_height
+
             self.iter_index += 1
+            if chunk_type in ["🏂", "❓", "❓❓❓", "🗝🗝🗝🗝🗝️"]:
+                dirty_pal = [(255,0,0), (0,255,0), (0,0,255), (255,0,255)]
+                return self.apply_palette(dirty_pal, self.frame)
             return self.apply_palette(self.current_palette, self.frame)
         else:
             raise StopIteration
