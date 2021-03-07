@@ -46,6 +46,16 @@ class Chunk:
                     return "🎨"
                 elif b == 5:
                     return "🎬"
+                elif b == 0x0b:
+                    return "🗝🗝🗝🗝🗝️"
+                elif b == 0:
+                    return "💣"
+                elif b == 9:
+                    return "🏂"
+                elif b == 3:
+                    return "❓"
+                elif b == 0x0e:
+                    return "❓❓❓"
         return "💩"
 
 
@@ -63,8 +73,6 @@ class VIPFile:
         self.video_height = 0x8C
         self.video_width = 0xE4
         self.analyze_vip_file()
-        self.iter_index = 0
-        self.current_palette = None
 
     def __del__(self):
         if self.fd:
@@ -97,17 +105,9 @@ class VIPFile:
             size = bh.data_size
 
             text = ""
+            endset = bh.get_type()
             for i, b in enumerate(h):
                 text += f"{b:02x} "
-                if i == 3:
-                    if b == 4:
-                        endset = "🗝️"
-                    elif b == 7:
-                        endset = "🎵"
-                    elif b == 2:
-                        endset = "🎨"
-                    elif b == 5:
-                        endset = "🎬"
             if endset in filter_by or len(filter_by) == 0:
                 print(f"{count + init:06}: [{size:>6}]", end=" ")
                 print(f"{text} {endset}")
@@ -146,22 +146,28 @@ class VIPFile:
                 break
         return palette
 
-    def draw_keyframe(self, frame_id):
+    def draw_keyframe(self, frame_id, frame):
         res = []
         kdata = self.get_chunk(frame_id)
-        for b in kdata:
-            if b == 0:
-                res += [0] * self.video_width
-                continue
+        iter_data = iter(kdata)
+        ix = 0
+        for b in iter_data:
             current_val = b
-            repetitions = current_val & 0x7F  ####+ 1
-            try:
-                col = next()
-            except:
-                col = [0]
-            res += col * repetitions
+            repetitions = (current_val & 0x7F) + 1
+            if current_val <= 0x80:
+                colors = [next(iter_data) for _ in range(repetitions)]
+                res += colors
+                ix += repetitions
+            else:
+                #if current_val == 0:
+                #    res += [0] * repetitions
+                #    ix += 1
+                color = next(iter_data)
+                res += [color] * repetitions
+                ix += 1
+            ix += 1
 
-        return np.array(res, dtype="uint").reshape(self.video_width, self.video_height)
+        return np.array(res, dtype="uint").reshape(self.video_width, self.video_height)  # 36480
 
     def go_to_line(self, byte_list, initial_position=0xC8A):
         """Se supone que son 4 bytes.
@@ -183,7 +189,7 @@ class VIPFile:
         current_line = 0
         while num_parts != 0:
             current_line += self.go_to_line(
-                kdata[pos : pos + 2], 0
+                kdata[pos:pos + 2], 0
             )  # desplazamiento inicial
             pos += 2
             num_lines = kdata[pos]
@@ -245,13 +251,15 @@ class VIPFile:
                 self.iter_index += 1
                 chunk = self.chunks[self.iter_index]
                 chunk_type = chunk.get_type()
-            if chunk_type == "🗝️":
-                self.frame = self.draw_keyframe(self.iter_index)
-            if chunk_type == "🎬":
+            if chunk_type in ["🗝️"]:
+                self.frame = self.draw_keyframe(self.iter_index, self.frame)
+            elif chunk_type == "🎬":
                 self.frame = self.draw_difference(
-                    self.frame.reshape((self.video_height * self.video_width,)),
+                    np.array(self.frame, dtype="uint8").reshape((self.video_height * self.video_width,)),
                     self.iter_index,
                 )
+            elif chunk_type == "💣":
+                self.frame = [0] * self.video_width * self.video_height
             self.iter_index += 1
             return self.apply_palette(self.current_palette, self.frame)
         else:
@@ -273,13 +281,14 @@ class VIPFile:
 
 
 if __name__ == "__main__":
-    v = VIPFile("SN00002.VIP", 0x0DF5B6A0, 10000)
+    #v = VIPFile("SN00002.VIP", 0x0DF5B6A0, 10000)
+    v = VIPFile("SN00002.VIP", 0x20, 10000)
 
-    for i, frame in enumerate(v[:600]):
+    for i, frame in enumerate(v[:700]):
         plt.imsave(f"frames/frame{i}.png", frame)
 
     os.chdir("frames")
-    subprocess.call(
+    '''subprocess.call(
         [
             "ffmpeg",
             "-i",
@@ -288,6 +297,6 @@ if __name__ == "__main__":
             "25",
             "-c:v",
             "libx264",
-            "video_name.mp4",
+            "video.mp4",
         ]
-    )
+    )'''
