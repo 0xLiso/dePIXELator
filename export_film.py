@@ -38,24 +38,30 @@ class Chunk:
     def get_type(self):
         for i, b in enumerate(self.header):
             if i == 3:
-                if b == 4:
-                    return "🗝️"
-                elif b == 7:
-                    return "🎵"
+                if b == 0:
+                    return "💣" # ¿Es un clear?
                 elif b == 2:
-                    return "🎨"
-                elif b == 5:
-                    return "🎬"
-                elif b == 0x0b:
-                    return "🗝🗝🗝🗝🗝️"
-                elif b == 0:
-                    return "💣"
-                elif b == 9:
-                    return "🏂"
+                    return "🎨" # Paleta
                 elif b == 3:
-                    return "❓" # es keyframe
-                elif b == 0x0e:
-                    return "❓❓❓"
+                    return "🖼️" # Keyframe
+                elif b == 4:
+                    return "🗝️" # Frame diferencias tipo 1
+                elif b == 5:
+                    return "🎬" # Frame diferencias tipo 2
+                elif b == 6:
+                    return "🎞️" # ¿Frame diferencias tipo 3?
+                elif b == 7:
+                    return "🎵" # Audio
+                elif b == 9:
+                    return "🏂" # ¿Esto es un salto?
+                elif b == 11:
+                    return "📼" # ¿Frame diferencias tipo 4?
+                elif b == 12:
+                    return "❓" # Ni idea, no parece video
+                elif b == 13:
+                    return "❗" # Ni idea, no parece video
+                elif b == 14:
+                    return "💲" # Ni idea, no parece video
         return "💩"
 
 
@@ -145,6 +151,16 @@ class VIPFile:
             except Exception as e:
                 break
         return palette
+
+    ''' Los frames de tipo 3 tienen todos 31920 pixeles, asi que se pintan y ya esta '''
+    def draw_frame_type03(self, frame_id):
+        res = []
+        kdata = self.get_chunk(frame_id)
+        for color in kdata:
+            res += [color]
+
+        return np.array(res, dtype="uint").reshape(self.video_width, self.video_height)  # 36480
+
 
     def draw_keyframe(self, frame_id, frame):
         res = []
@@ -251,27 +267,33 @@ class VIPFile:
                 self.iter_index += 1
                 chunk = self.chunks[self.iter_index]
                 chunk_type = chunk.get_type()
-            if chunk_type in ["🗝️"]:
+
+            if chunk_type == "💣": # 0x00
+                self.frame = [0] * self.video_width * self.video_height
+            elif chunk_type in ["🖼️"]: # 0x03
+                self.frame = self.draw_frame_type03(self.iter_index)
+            elif chunk_type in ["🗝️"]: # 0x04
                 self.frame = self.draw_keyframe(self.iter_index, self.frame)
-            elif chunk_type == "🎬":
+            elif chunk_type == "🎬": # 0x05
                 self.frame = self.draw_difference(
                     np.array(self.frame, dtype="uint8").reshape((self.video_height * self.video_width,)),
                     self.iter_index,
                 )
-            elif chunk_type == "💣":
+            elif chunk_type == "🎞️": # 0x06
                 self.frame = [0] * self.video_width * self.video_height
-
-            elif chunk_type == "🏂":
-                self.frame = [0] * self.video_width * self.video_height
-            elif chunk_type == "❓":
+            elif chunk_type == "🏂": # 0x09
+                pass # Esto se supone que es salto y no hace nada
+            elif chunk_type == "📼": # 0x11
                 self.frame = [1] * self.video_width * self.video_height
-            elif chunk_type == "❓❓❓":
-                self.frame = [2] * self.video_width * self.video_height
-            elif chunk_type == "🗝🗝🗝🗝🗝️":
-                self.frame = [3] * self.video_width * self.video_height
+            elif chunk_type == "❓": # 0x12
+                pass # No se que es pero no creo que sea video
+            elif chunk_type == "❗": # 0x13
+                pass # No se que es pero no creo que sea video
+            elif chunk_type == "💲": # 0x14
+                pass # No se que es pero no creo que sea video
 
             self.iter_index += 1
-            if chunk_type in ["🏂", "❓", "❓❓❓", "🗝🗝🗝🗝🗝️"]:
+            if chunk_type in ["🎞️", "📼"]: # Nos faltan 2 tipos de frame
                 dirty_pal = [(255,0,0), (0,255,0), (0,0,255), (255,0,255)]
                 return self.apply_palette(dirty_pal, self.frame)
             return self.apply_palette(self.current_palette, self.frame)
