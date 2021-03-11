@@ -2,6 +2,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
+venv/
+*.frm
+*.VIP
+*.pal
 
 # C extensions
 *.so

@@ -213,3 +213,12 @@ Fichero [SN00002.VIP]
 
 
 
+bp funciones que dibujan en VGA
+
+bp 1B6E:0052  <-___PINTA_EN_VGA_FUN_29cc_0052 (no pinta video de vaqueros)
+bp 1B6E:03CC  <-___PINTA_EN_VGA_FUN_29cc_03cc (no pinta video de vaqueros)
+
+bp 0cb4:1037 <- ___PINTA_EN_VGA_FUN_1b12_1037 (no pinta video de vaqueros)
+  
+
+segmento desde ghidra a dosbox debug -> diferencia de offset xD  

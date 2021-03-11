@@ -85,8 +85,7 @@ class VIPFile:
             self.fd.close()
 
     def analyze_vip_file(self):
-        self.fd.seek(0, 0)
-        self.fd.seek(self.initial_offset, 1)
+        self.fd.seek(self.initial_offset, 0)
         while True:
             try:
                 tmp_chunk = Chunk(self.fd)
@@ -94,6 +93,7 @@ class VIPFile:
                 if 0 < self.max_chunks < len(self.chunks):
                     break
             except EOFError as e:
+                print(f"EOF with {len(self.chunks)}")
                 break
             except Exception as e:
                 print(e)
@@ -161,29 +161,39 @@ class VIPFile:
 
         return np.array(res, dtype="uint").reshape(self.video_width, self.video_height)  # 36480
 
-
     def draw_keyframe(self, frame_id, frame):
-        res = []
+        last_frame = frame
         kdata = self.get_chunk(frame_id)
-        iter_data = iter(kdata)
-        ix = 0
-        for b in iter_data:
-            current_val = b
-            repetitions = (current_val & 0x7F) + 1
-            if current_val <= 0x80:
-                colors = [next(iter_data) for _ in range(repetitions)]
-                res += colors
-                ix += repetitions
-            else:
-                #if current_val == 0:
-                #    res += [0] * repetitions
-                #    ix += 1
-                color = next(iter_data)
-                res += [color] * repetitions
-                ix += 1
-            ix += 1
+        next_line = 0xE4
+        current_line = 0
+        pos = 0
+        num_commands = 140
+        draw_address = current_line
+        while num_commands != 0:
+            draw_type = kdata[pos]
+            pos += 1
+            repetitions = draw_type & 0x7F
+            repetitions += 1
 
-        return np.array(res, dtype="uint").reshape(self.video_width, self.video_height)  # 36480
+            # print(f'\t\tS:{desp_linea} T:{cuantas_veces}')
+            if draw_type <= 0x80:
+                for _ in range(repetitions):
+                    color = kdata[pos]
+                    pos += 1
+                    # print(f'\t\t\tPA:{hex(color)}')
+                    last_frame[draw_address] = color
+                    draw_address += 1
+            else:
+                color = kdata[pos]
+                pos += 1
+                # print(f'\t\t\tP:{hex(color)}')
+                for _ in range(repetitions):
+                    last_frame[draw_address] = color
+                    draw_address += 1
+
+            num_commands -= 1
+        current_line += next_line
+        return np.array(last_frame, dtype="uint8").reshape(self.video_width, self.video_height)  # 31920
 
     def go_to_line(self, byte_list, initial_position=0xC8A):
         """Se supone que son 4 bytes.
@@ -197,53 +207,57 @@ class VIPFile:
 
     def draw_difference(self, last_frame, diff_id):
         next_line = 0xE4
-        kdata = list(self.chunks[diff_id].get_data())
-        # nos saltamos los 2 primeros bytes
-        pos = 2
-        num_parts = kdata[pos]
-        pos += 2
-        current_line = 0
-        while num_parts != 0:
-            current_line += self.go_to_line(
-                kdata[pos:pos + 2], 0
-            )  # desplazamiento inicial
+        try:
+            kdata = list(self.chunks[diff_id].get_data())
+            # nos saltamos los 2 primeros bytes
+            pos = 2
+            num_parts = kdata[pos]
             pos += 2
-            num_lines = kdata[pos]
-            # print(f'L:{num_lineas}')
-            pos += 2
-            while num_lines != 0:
-                num_commands = kdata[pos]
-                # print(f'\tC:{num_commands}')
-                pos += 1
-                draw_address = current_line
-                while num_commands != 0:
-                    draw_address += kdata[pos]
+            current_line = 0
+            while num_parts != 0:
+                current_line += self.go_to_line(
+                    kdata[pos:pos + 2], 0
+                )  # desplazamiento inicial
+                pos += 2
+                num_lines = kdata[pos]
+                # print(f'L:{num_lineas}')
+                pos += 2
+                while num_lines != 0:
+                    num_commands = kdata[pos]
+                    # print(f'\tC:{num_commands}')
                     pos += 1
-                    draw_type = kdata[pos]
-                    pos += 1
-                    repetitions = draw_type & 0x7F
-                    repetitions += 1
+                    draw_address = current_line
+                    while num_commands != 0:
+                        draw_address += kdata[pos]
+                        pos += 1
+                        draw_type = kdata[pos]
+                        pos += 1
+                        repetitions = draw_type & 0x7F
+                        repetitions += 1
 
-                    # print(f'\t\tS:{desp_linea} T:{cuantas_veces}')
-                    if draw_type <= 0x80:
-                        for _ in range(repetitions):
+                        # print(f'\t\tS:{desp_linea} T:{cuantas_veces}')
+                        if draw_type <= 0x80:
+                            for _ in range(repetitions):
+                                color = kdata[pos]
+                                pos += 1
+                                # print(f'\t\t\tPA:{hex(color)}')
+                                last_frame[draw_address] = color
+                                draw_address += 1
+                        else:
                             color = kdata[pos]
                             pos += 1
-                            # print(f'\t\t\tPA:{hex(color)}')
-                            last_frame[draw_address] = color
-                            draw_address += 1
-                    else:
-                        color = kdata[pos]
-                        pos += 1
-                        # print(f'\t\t\tP:{hex(color)}')
-                        for _ in range(repetitions):
-                            last_frame[draw_address] = color
-                            draw_address += 1
+                            # print(f'\t\t\tP:{hex(color)}')
+                            for _ in range(repetitions):
+                                last_frame[draw_address] = color
+                                draw_address += 1
 
-                    num_commands -= 1
-                num_lines -= 1
-                current_line += next_line
-            num_parts -= 1
+                        num_commands -= 1
+                    num_lines -= 1
+                    current_line += next_line
+                num_parts -= 1
+        except Exception as e:
+            print(f"Exception!!!!!! en frame id: {diff_id}")
+            pass
         return last_frame
 
     def apply_palette(self, palette, img):
@@ -265,6 +279,8 @@ class VIPFile:
                 if chunk_type == "🎨":
                     self.current_palette = self.get_palette(self.iter_index)
                 self.iter_index += 1
+                if self.iter_index >= len(self.chunks):
+                    raise StopIteration
                 chunk = self.chunks[self.iter_index]
                 chunk_type = chunk.get_type()
 
@@ -316,11 +332,11 @@ class VIPFile:
 
 
 if __name__ == "__main__":
-    #v = VIPFile("SN00002.VIP", 0x0DF5B6A0, 10000)
-    v = VIPFile("SN00002.VIP", 0x20, 10000)
+    #v = VIPFile("/home/liso/notebooks/DL/Zorton/data/game/iso/SN00002.VIP", 0x0DF5B6A0, 10000)
+    v = VIPFile("/home/liso/notebooks/DL/Zorton/data/game/iso/SN00002.VIP", 0x20, 10000)
 
-    for i, frame in enumerate(v[:700]):
-        plt.imsave(f"frames/frame{i}.png", frame)
+    for i, frame in enumerate(v[700:3700]):
+        plt.imsave(f"frames/frame{i:04}.png", frame)
 
     os.chdir("frames")
     '''subprocess.call(
