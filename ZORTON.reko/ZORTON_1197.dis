@@ -1,0 +1,17 @@
+void fn1197_09AC(word16 ax, selector ds)
+// stackDelta: 0; fpuStackDelta: 0; fpuMaxParam: -1
+
+// Called from:
+//      fn268D_0282
+// MayUse:  ax:[0..15] ds:[0..15] ss:[0..15]
+// LiveOut:
+// Trashed: SCZDO ax bx cx es Top
+// Preserved: sp
+fn1197_09AC_entry:
+l1197_09AC:
+	fn0800_10B1(ds, 0<32>)
+	fn0800_082E(ds, ax)
+	return
+fn1197_09AC_exit:
+
+

@@ -1,0 +1,27 @@
+void fn1312_1037(segptr32 ptrArg04)
+// stackDelta: 0; fpuStackDelta: 0; fpuMaxParam: -1
+
+// Called from:
+//      fn0CE0_08FC
+// MayUse:  Stack +0004:[0..31]
+// LiveOut:
+// Trashed: SCZDO ax Top
+// Preserved: bp cx di ds dx es si sp
+fn1312_1037_entry:
+l1312_1037:
+	selector ds_70 = SLICE(ptrArg04, selector, 16)
+	word16 si_36 = SLICE(ptrArg04, word16, 0) + 0xC80<16>
+	word16 di_37 = 0xC80<16>
+	word16 cx_39 = 0x3840<16>
+l1312_105A:
+	branch cx_39 == 0<16> l1312_105D
+l1312_105D:
+	return
+fn1312_1037_exit:
+l1312_105A_1:
+	Mem66[0xA000<16>:di_37:word32] = Mem43[ds_70:si_36:word32]
+	si_36 = si_36 + 4<i16>
+	di_37 = di_37 + 4<i16>
+	cx_39 = cx_39 - 1<16>
+
+

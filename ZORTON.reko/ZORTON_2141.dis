@@ -1,0 +1,47 @@
+word16 fn2141_020E(selector ds)
+// stackDelta: 0; fpuStackDelta: 0; fpuMaxParam: -1
+
+// Called from:
+//      main
+// MayUse:  ds:[0..15] ss:[0..15]
+// LiveOut: bx
+// Trashed: SCZDO bx cx dx eax es Top
+// Preserved: bp sp
+fn2141_020E_entry:
+l2141_020E:
+	word16 dx_14
+	word16 ax_12 = fn0800_0436(0x1C<8>, out dx_14)
+	Mem19[ds:0xA430<16>:word16] = dx_14
+	Mem20[ds:0xA42E<16>:word16] = ax_12
+	fn0800_0445(0x1C<8>, 0x21410007<32>)
+	__outb(0x43<16>, 0x36<8>)
+	__outb(0x40<16>, 0xC6<8>)
+	__outb(0x40<16>, 0x49<8>)
+	word16 bx_45 = fn0800_10B1(ds, 0p32)
+	Mem60[ds:0xA432<16>:word32] = 0x400049<32>
+	Mem64[28BA:302A:word16] = Mem60[28BA:302A:word16] | 4<16>
+	return bx_45
+fn2141_020E_exit:
+
+
+byte fn2141_0271(selector ds)
+// stackDelta: 0; fpuStackDelta: 0; fpuMaxParam: -1
+
+// Called from:
+//      fn268D_03E2
+// MayUse:  ds:[0..15]
+// LiveOut: bl
+// Trashed: SCZO ah al bl ch cl dx Top
+// Preserved: sp
+fn2141_0271_entry:
+l2141_0271:
+	fn0800_0445(0x1C<8>, Mem0[ds:0xA42E<16>:word32])
+	__outb(0x43<16>, 0x36<8>)
+	__outb(0x40<16>, 0<8>)
+	__outb(0x40<16>, 0<8>)
+	__syscall(0x1A<8>)
+	__syscall(0x21<8>)
+	return 0<8>
+fn2141_0271_exit:
+
+

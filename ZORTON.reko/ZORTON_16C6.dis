@@ -1,0 +1,37 @@
+word16 fn16C6_0008(byte ch)
+// stackDelta: 0; fpuStackDelta: 0; fpuMaxParam: -1
+
+// Called from:
+//      main
+// MayUse:  ch:[0..7]
+// LiveOut: eax
+// Trashed: SCZDOP cx eax ebx Top
+// Preserved: sp
+fn16C6_0008_entry:
+l16C6_0008:
+	byte SCZDOP_9 = cond(0<8>) | SCZDOP
+	byte ah_15 = SLICE(SCZDOP_9, byte, 8)
+	byte bh_32 = SLICE(SCZDOP_9, byte, 8)
+	word32 eax_143 = SEQ(eax_16_16, ah_15 & 0xF<8> & 0xF0<8>, SCZDOP_9)
+	branch (ah_15 & 0xF<8> & 0xF0<8>) == 0xF0<8> l16C6_0069
+l16C6_001D:
+	word16 cx_50 = SEQ(ch, 2<8>)
+	eax_143 = SEQ(eax_16_16, (bh_32 | 0xF0<8>) & 0xF0<8>, SCZDOP_9) (alias)
+	byte CDP_65 = SLICE(SCZDOP_9, bool, 5)
+	branch ((bh_32 | 0xF0<8>) & 0xF0<8>) == 0<8> l16C6_0069
+l16C6_002B:
+	byte SCZDOP_66 = cond(cx_50 + 1<16>) | CDP_65
+	word16 cx_176 = cx_50 + 1<16>
+	branch (SCZDOP_66 ^ 0x40000<32> ^ SCZDOP_66) == 0<32> l16C6_0062
+l16C6_004A:
+	cx_176 = cx_50 + 2<16> (alias)
+	branch (SCZDOP_66 ^ 0x200000<32> ^ SCZDOP_66) == 0<32> l16C6_0062
+l16C6_0061:
+	cx_176 = cx_50 + 3<16> (alias)
+l16C6_0062:
+	eax_143 = SEQ(eax_16_16, CONVERT(SLICE(cx_176, byte, 0), byte, word16)) (alias)
+l16C6_0069:
+	return SLICE(eax_143, word16, 0)
+fn16C6_0008_exit:
+
+

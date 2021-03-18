@@ -1,0 +1,39 @@
+word32 fn1ED0_0009(selector ds, segptr32 ptrArg04, ptr16 & dsOut)
+// stackDelta: 0; fpuStackDelta: 0; fpuMaxParam: -1
+
+// Called from:
+//      fn1D10_02AE
+//      fn1D10_0E66
+// MayUse:  ds:[0..15] ss:[0..15] Stack +0004:[0..31]
+// LiveOut: ds eax
+// Trashed: SCZO bx cx di ds dx eax es si Top
+// Preserved: DP bp sp
+fn1ED0_0009_entry:
+l1ED0_0009:
+	fn0800_1109(ds, Mem7[28BA:A18A:word16])
+	word32 dx_ax_176 = <invalid>
+	word16 cx_179
+	word16 dx_180
+	word16 bx_181
+	fn0800_06AB(ds, Mem42[28BA:A18A:word16], Mem34[ptrArg04:word32] - dx_ax_176, 1<8>, out cx_179, out dx_180, out bx_181)
+	word32 dx_ax_177 = <invalid>
+	branch dx_ax_177 != 0xFFFFFFFF<32> l1ED0_0061
+l1ED0_0055:
+	word16 dx_182
+	selector es_183
+	fn263F_04B6(0x28BA<16>, ds, out dx_182, out es_183, out ds)
+l1ED0_0061:
+	word32 eax_92 = Mem88[ptrArg04:word32]
+	selector es_90 = SLICE(ptrArg04, selector, 16)
+	word16 eax_16_16_162 = SLICE(eax_92, word16, 16)
+	branch eax_92 == dx_ax_177 l1ED0_007A
+l1ED0_006E:
+	word16 dx_184
+	selector es_185
+	fn263F_04B6(es_90, ds, out dx_184, out es_185, out ds)
+l1ED0_007A:
+	dsOut = ds
+	return SEQ(eax_16_16_162, 0<16>)
+fn1ED0_0009_exit:
+
+

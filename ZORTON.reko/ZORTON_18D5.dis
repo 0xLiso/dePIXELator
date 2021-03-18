@@ -1,0 +1,139 @@
+void fn18D5_11FB(segptr32 ptrArg04, word16 wArg08, word16 wArg0A)
+// stackDelta: 0; fpuStackDelta: 0; fpuMaxParam: -1
+
+// Called from:
+//      fn0CE0_08FC
+// MayUse:  Stack +0004:[0..31] Stack +0008:[0..15] Stack +000A:[0..15]
+// LiveOut:
+// Trashed: SCZDO ax bx cx dx Top
+// Preserved: bp ds edi es esi fs sp
+fn18D5_11FB_entry:
+l18D5_11FB:
+	word16 di_32 = SLICE(ptrArg04, word16, 0)
+	selector es_175 = SLICE(ptrArg04, selector, 16)
+	word16 si_168 = 0xBB80<16>
+	word16 cx_174 = 0x1F40<16>
+	di_170 = di_32
+l18D5_121B:
+	word16 di_170
+	branch cx_174 == 0<16> l18D5_121D
+l18D5_121D:
+	Mem49[18D5:1299:word16] = wArg08 + 0xBB80<16>
+	word16 cx_113 = 0<16>
+l18D5_1231:
+	fn18D5_12E5()
+	word16 di_137 = (cx_275 << 6<16>) + SEQ(SLICE(cx_275, byte, 0), 0<8>) + 0xBB80<16>
+	word16 si_161 = Mem75[18D5:1299:word16]
+	word16 cx_167 = 5<16>
+l18D5_1254:
+	branch cx_167 == 0<16> l18D5_1256
+l18D5_1256:
+	word16 si_152 = di_137 + wArg08
+	word16 cx_159 = 0x96<16>
+l18D5_125E:
+	branch cx_159 == 0<16> l18D5_1260
+l18D5_1260:
+	word16 si_148 = Mem89[18D5:1299:word16] + 0x136<16>
+	word16 cx_150 = 5<16>
+l18D5_126C:
+	branch cx_150 == 0<16> l18D5_126E
+l18D5_126E:
+	Mem96[18D5:1299:word16] = si_148
+	word16 cx_105 = 0x32<16> - (cx_275 + 1<16>)
+	word16 si_102 = di_32
+	word16 cx_109 = (cx_105 << 7<16>) + (cx_105 << 5<16>)
+l18D5_1285:
+	branch cx_109 == 0<16> l18D5_1287
+l18D5_1287:
+	cx_113 = cx_275 + 1<16>
+	cx_275 = cx_113
+	branch cx_275 <u 0x28<16> l18D5_1231
+l18D5_128E:
+	return
+fn18D5_11FB_exit:
+l18D5_1285_1:
+	Mem138[0xA000<16>:di_137:word16] = Mem118[es_175:si_102:word16]
+	si_102 = si_102 + 2<i16>
+	di_137 = di_137 + 2<i16>
+	cx_109 = cx_109 - 1<16>
+l18D5_126C_1:
+	Mem147[0xA000<16>:di_137:word16] = Mem143[wArg0A:si_148:word16]
+	si_148 = si_148 + 2<i16>
+	di_137 = di_137 + 2<i16>
+	cx_150 = cx_150 - 1<16>
+l18D5_125E_1:
+	Mem156[0xA000<16>:di_137:word16] = Mem89[wArg0A:si_152:word16]
+	si_152 = si_152 + 2<i16>
+	di_137 = di_137 + 2<i16>
+	cx_159 = cx_159 - 1<16>
+l18D5_1254_1:
+	Mem164[0xA000<16>:di_137:word16] = Mem84[wArg0A:si_161:word16]
+	si_161 = si_161 + 2<i16>
+	di_137 = di_137 + 2<i16>
+	cx_167 = cx_167 - 1<16>
+l18D5_121B_1:
+	Mem171[es_175:di_170:word16] = Mem45[0xA000<16>:si_168:word16]
+	si_168 = si_168 + 2<i16>
+	di_170 = di_170 + 2<i16>
+	cx_174 = cx_174 - 1<16>
+
+
+void fn18D5_129B(word16 wArg04, word16 wArg06)
+// stackDelta: 0; fpuStackDelta: 0; fpuMaxParam: -1
+
+// Called from:
+//      fn0CE0_08FC
+// MayUse:  Stack +0004:[0..15] Stack +0006:[0..15]
+// LiveOut:
+// Trashed: SCZDO ax bx cx dx Top
+// Preserved: bp ds edi es esi fs sp
+fn18D5_129B_entry:
+l18D5_129B:
+	word16 di_30 = 0xED80<16>
+	word16 bx_33 = 0x29<16>
+	word16 cx_34 = 0x640<16>
+l18D5_12BE:
+	fn18D5_12E5()
+	word16 si_48 = wArg04
+	cx_49 = cx_34
+	di_82 = di_30
+l18D5_12C9:
+	word16 di_82
+	word16 cx_49
+	branch cx_49 == 0<16> l18D5_12CB
+l18D5_12CB:
+	cx_34 = cx_34 + 0xA0<16>
+	di_30 = di_30 - 0x140<16>
+	bx_33 = bx_33 - 1<16>
+	branch bx_33 != 0<16> l18D5_12BE
+l18D5_12DA:
+	return
+fn18D5_129B_exit:
+l18D5_12C9_1:
+	Mem83[0xA000<16>:di_82:word16] = Mem63[wArg06:si_48:word16]
+	si_48 = si_48 + 2<i16>
+	di_82 = di_82 + 2<i16>
+	cx_49 = cx_49 - 1<16>
+
+
+void fn18D5_12E5()
+// stackDelta: 0; fpuStackDelta: 0; fpuMaxParam: -1
+
+// Called from:
+//      fn18D5_11FB
+//      fn18D5_129B
+// MayUse: 
+// LiveOut:
+// Trashed: SCZO al dx Top
+// Preserved: sp
+fn18D5_12E5_entry:
+l18D5_12E5:
+l18D5_12E8:
+	branch (__inb(0x3DA<16>) & 8<8>) == 0<8> l18D5_12E8
+l18D5_12ED:
+	branch (__inb(0x3DA<16>) & 8<8>) != 0<8> l18D5_12ED
+l18D5_12F2:
+	return
+fn18D5_12E5_exit:
+
+
