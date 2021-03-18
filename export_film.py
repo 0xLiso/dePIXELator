@@ -351,3 +351,43 @@ if __name__ == "__main__":
             "video.mp4",
         ]
     )'''
+
+    
+    
+    
+def draw_frame_0b(chunk_id,last_frame):
+    kdata = v.get_chunk(chunk_id)
+    pos = 0
+    vga_pos = 0
+    if kdata[pos] == 0:
+        print("es un 0!!!!")
+        pos+=1
+        while pos<len(kdata):
+            colors = kdata[pos:pos+2]
+            pos+=2
+            maskara = kdata[pos] 
+            pos+=1
+            color = [ colors[i] for i in maskaras[maskara & 0x0f]]
+            color2 = [ colors[i] for i in maskaras[(maskara & 0xf0)>>4]]
+            last_frame[vga_pos:vga_pos+4]=color
+            last_frame[vga_pos+228:vga_pos+228+4]=color2
+            vga_pos+=4
+            if vga_pos%228 == 0:
+                vga_pos+=228
+    else:
+        print("es un 1!!!!")
+        pos+=1
+        while pos<len(kdata):
+            colors = kdata[pos:pos+2]
+            pos+=2
+            maskara = kdata[pos] 
+            pos+=1
+            color = [ colors[i] for i in maskaras[maskara & 0x0f]]
+            color2 = [ colors[i] for i in maskaras[(maskara & 0xf0)>>4]]
+            last_frame[vga_pos:vga_pos+4]=color
+            last_frame[vga_pos+228:vga_pos+228+4]=color2
+            vga_pos+=4
+            if vga_pos%228 == 0:
+                vga_pos+=228
+        
+    

@@ -218,7 +218,57 @@ bp funciones que dibujan en VGA
 bp 1B6E:0052  <-___PINTA_EN_VGA_FUN_29cc_0052 (no pinta video de vaqueros)
 bp 1B6E:03CC  <-___PINTA_EN_VGA_FUN_29cc_03cc (no pinta video de vaqueros)
 
-bp 0cb4:1037 <- ___PINTA_EN_VGA_FUN_1b12_1037 (no pinta video de vaqueros)
+bp 0cb4:1037  <- ___PINTA_EN_VGA_FUN_1b12_1037 (no pinta video de vaqueros)
   
 
+bp 106E:0481  <-  
+bp 106E:04CA  <-
+bp 1B6E:05CB  <-
+bp 1B6E:06C8  <-
+bp 1277:129B  <-
+
+
+
 segmento desde ghidra a dosbox debug -> diferencia de offset xD  
+ hex(0xpos_en_ghidra - 0x0e5e) <- dosbox debug segment
+
+
+header en : d 225C:A380 
+
+
+
+cs:07b3 07b9
+
+
+d 2F36:0000 <- chunk que estamos pintando
+
+
+chunk 0xb funcion bp 1B6E:06C8 
+primer byte -> tipo de pintado.
+tripletes ->
+byte 1 y 2 -> colores.
+byte 3 -> 2 mascaras &0x0f ->primera mascara*4 + bp [0x6] -> Esta la pinta en ptr_vga+0x140
+		     &0xf0  -> segunda mascara*4 +bp[0x6] -> Esta la pinta en ptr_vga+0x140
+
+posicion mascaras: d 1b6e:0005
+
+
+
+00 00 00 00 
+00 FF 00 00 
+00 00 FF 00 
+00 FF FF 00 
+00 00 00 FF 
+00 FF 00 FF 
+00 00 FF FF 
+00 FF FF FF 
+00 00 00 00 
+FF FF 00 00 
+FF 00 FF 00 
+FF FF FF 00
+FF 00 00 FF 
+FF FF 00 FF 
+FF 00 FF FF 
+FF FF FF FF 
+
+
