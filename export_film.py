@@ -39,29 +39,29 @@ class Chunk:
         for i, b in enumerate(self.header):
             if i == 3:
                 if b == 0:
-                    return "💣" # ¿Es un clear?
+                    return "💣"  # ¿Es un clear?
                 elif b == 2:
-                    return "🎨" # Paleta
+                    return "🎨"  # Paleta
                 elif b == 3:
-                    return "🖼️" # Keyframe
+                    return "🖼️"  # Keyframe
                 elif b == 4:
-                    return "🗝️" # Frame diferencias tipo 1
+                    return "🗝️"  # Frame diferencias tipo 1
                 elif b == 5:
-                    return "🎬" # Frame diferencias tipo 2
+                    return "🎬"  # Frame diferencias tipo 2
                 elif b == 6:
-                    return "🎞️" # ¿Frame diferencias tipo 3?
+                    return "🎞️"  # ¿Frame diferencias tipo 3?
                 elif b == 7:
-                    return "🎵" # Audio
+                    return "🎵"  # Audio
                 elif b == 9:
-                    return "🏂" # ¿Esto es un salto?
+                    return "🏂"  # ¿Esto es un salto?
                 elif b == 11:
-                    return "📼" # ¿Frame diferencias tipo 4?
+                    return "📼"  # ¿Frame diferencias tipo 4?
                 elif b == 12:
-                    return "❓" # Ni idea, no parece video
+                    return "❓"  # Ni idea, no parece video
                 elif b == 13:
-                    return "❗" # Ni idea, no parece video
+                    return "❗"  # Ni idea, no parece video
                 elif b == 14:
-                    return "💲" # Ni idea, no parece video
+                    return "💲"  # Ni idea, no parece video
         return "💩"
 
 
@@ -79,6 +79,25 @@ class VIPFile:
         self.video_height = 0x8C
         self.video_width = 0xE4
         self.analyze_vip_file()
+
+        self.masks = (
+            (0x00, 0x00, 0x00, 0x00),
+            (0x00, 0x1, 0x00, 0x00),
+            (0x00, 0x00, 0x1, 0x00),
+            (0x00, 0x1, 0x1, 0x00),
+            (0x00, 0x00, 0x00, 0x1),
+            (0x00, 0x1, 0x00, 0x1),
+            (0x00, 0x00, 0x1, 0x1),
+            (0x00, 0x1, 0x1, 0x1),
+            (0x00, 0x00, 0x00, 0x00),
+            (0x1, 0x1, 0x00, 0x00),
+            (0x1, 0x00, 0x1, 0x00),
+            (0x1, 0x1, 0x1, 0x00),
+            (0x1, 0x00, 0x00, 0x1),
+            (0x1, 0x1, 0x00, 0x1),
+            (0x1, 0x00, 0x1, 0x1),
+            (0x1, 0x1, 0x1, 0x1),
+        )
 
     def __del__(self):
         if self.fd:
@@ -152,16 +171,63 @@ class VIPFile:
                 break
         return palette
 
-    ''' Los frames de tipo 3 tienen todos 31920 pixeles, asi que se pintan y ya esta '''
+    def go_to_line(self, byte_list, initial_position=0xC8A):
+        """Se supone que son 4 bytes.
+        en el ejemplo viene como 0x00040044 y nos da un
+        salto a: 0x618a
+        Nos llegaran como 44 00 04 00  hay que pasarlo a LSB 0x00040044"""
+        ax = struct.unpack("<H", bytearray(byte_list))
+        return initial_position + ax[0] * 228
+
+    # %%
+
     def draw_frame_type03(self, frame_id):
+        """ Los frames de tipo 3 tienen todos 31920 pixeles, asi que se pintan y ya esta """
         res = []
         kdata = self.get_chunk(frame_id)
         for color in kdata:
             res += [color]
 
-        return np.array(res, dtype="uint").reshape(self.video_width, self.video_height)  # 36480
+        return np.array(res, dtype="uint").reshape(
+            self.video_width, self.video_height
+        )  # 36480
 
-    def draw_keyframe(self, frame_id, frame):
+    def draw_frame_type0b(self, chunk_id, last_frame):
+        kdata = v.get_chunk(chunk_id)
+        pos = 0
+        vga_pos = 0
+        if kdata[pos] == 0:
+            print("es un 0!!!!")
+            pos += 1
+            while pos < len(kdata):
+                colors = kdata[pos : pos + 2]
+                pos += 2
+                mask = kdata[pos]
+                pos += 1
+                color = [colors[i] for i in self.masks[mask & 0x0F]]
+                color2 = [colors[i] for i in self.masks[(mask & 0xF0) >> 4]]
+                last_frame[vga_pos : vga_pos + 4] = color
+                last_frame[vga_pos + 228 : vga_pos + 228 + 4] = color2
+                vga_pos += 4
+                if vga_pos % 228 == 0:
+                    vga_pos += 228
+        else:
+            print("es un 1!!!!")
+            pos += 1
+            while pos < len(kdata):
+                colors = kdata[pos : pos + 2]
+                pos += 2
+                mask = kdata[pos]
+                pos += 1
+                color = [colors[i] for i in self.masks[mask & 0x0F]]
+                color2 = [colors[i] for i in self.masks[(mask & 0xF0) >> 4]]
+                last_frame[vga_pos : vga_pos + 4] = color
+                last_frame[vga_pos + 228 : vga_pos + 228 + 4] = color2
+                vga_pos += 4
+                if vga_pos % 228 == 0:
+                    vga_pos += 228
+
+    def draw_frame_type04(self, frame_id, frame):
         last_frame = frame
         kdata = self.get_chunk(frame_id)
         next_line = 0xE4
@@ -193,19 +259,11 @@ class VIPFile:
 
             num_commands -= 1
         current_line += next_line
-        return np.array(last_frame, dtype="uint8").reshape(self.video_width, self.video_height)  # 31920
+        return np.array(last_frame, dtype="uint8").reshape(
+            self.video_width, self.video_height
+        )  # 31920
 
-    def go_to_line(self, byte_list, initial_position=0xC8A):
-        """Se supone que son 4 bytes.
-        en el ejemplo viene como 0x00040044 y nos da un
-        salto a: 0x618a
-        Nos llegaran como 44 00 04 00  hay que psarlo a LSB 0x00040044"""
-        ax = struct.unpack("<H", bytearray(byte_list))
-        return initial_position + ax[0] * 228
-
-    # %%
-
-    def draw_difference(self, last_frame, diff_id):
+    def draw_frame_type05(self, last_frame, diff_id):
         next_line = 0xE4
         try:
             kdata = list(self.chunks[diff_id].get_data())
@@ -216,7 +274,7 @@ class VIPFile:
             current_line = 0
             while num_parts != 0:
                 current_line += self.go_to_line(
-                    kdata[pos:pos + 2], 0
+                    kdata[pos : pos + 2], 0
                 )  # desplazamiento inicial
                 pos += 2
                 num_lines = kdata[pos]
@@ -284,33 +342,35 @@ class VIPFile:
                 chunk = self.chunks[self.iter_index]
                 chunk_type = chunk.get_type()
 
-            if chunk_type == "💣": # 0x00
+            if chunk_type == "💣":  # 0x00
                 self.frame = [0] * self.video_width * self.video_height
-            elif chunk_type in ["🖼️"]: # 0x03
+            elif chunk_type in ["🖼️"]:  # 0x03
                 self.frame = self.draw_frame_type03(self.iter_index)
-            elif chunk_type in ["🗝️"]: # 0x04
-                self.frame = self.draw_keyframe(self.iter_index, self.frame)
-            elif chunk_type == "🎬": # 0x05
-                self.frame = self.draw_difference(
-                    np.array(self.frame, dtype="uint8").reshape((self.video_height * self.video_width,)),
+            elif chunk_type in ["🗝️"]:  # 0x04
+                self.frame = self.draw_frame_type04(self.iter_index, self.frame)
+            elif chunk_type == "🎬":  # 0x05
+                self.frame = self.draw_frame_type05(
+                    np.array(self.frame, dtype="uint8").reshape(
+                        (self.video_height * self.video_width,)
+                    ),
                     self.iter_index,
                 )
-            elif chunk_type == "🎞️": # 0x06
+            elif chunk_type == "🎞️":  # 0x06
                 self.frame = [0] * self.video_width * self.video_height
-            elif chunk_type == "🏂": # 0x09
-                pass # Esto se supone que es salto y no hace nada
-            elif chunk_type == "📼": # 0x11
+            elif chunk_type == "🏂":  # 0x09
+                pass  # Esto se supone que es salto y no hace nada
+            elif chunk_type == "📼":  # 0x11
                 self.frame = [1] * self.video_width * self.video_height
-            elif chunk_type == "❓": # 0x12
-                pass # No se que es pero no creo que sea video
-            elif chunk_type == "❗": # 0x13
-                pass # No se que es pero no creo que sea video
-            elif chunk_type == "💲": # 0x14
-                pass # No se que es pero no creo que sea video
+            elif chunk_type == "❓":  # 0x12
+                pass  # No se que es pero no creo que sea video
+            elif chunk_type == "❗":  # 0x13
+                pass  # No se que es pero no creo que sea video
+            elif chunk_type == "💲":  # 0x14
+                pass  # No se que es pero no creo que sea video
 
             self.iter_index += 1
-            if chunk_type in ["🎞️", "📼"]: # Nos faltan 2 tipos de frame
-                dirty_pal = [(255,0,0), (0,255,0), (0,0,255), (255,0,255)]
+            if chunk_type in ["🎞️", "📼"]:  # Nos faltan 2 tipos de frame
+                dirty_pal = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 0, 255)]
                 return self.apply_palette(dirty_pal, self.frame)
             return self.apply_palette(self.current_palette, self.frame)
         else:
@@ -332,14 +392,14 @@ class VIPFile:
 
 
 if __name__ == "__main__":
-    #v = VIPFile("/home/liso/notebooks/DL/Zorton/data/game/iso/SN00002.VIP", 0x0DF5B6A0, 10000)
+    # v = VIPFile("/home/liso/notebooks/DL/Zorton/data/game/iso/SN00002.VIP", 0x0DF5B6A0, 10000)
     v = VIPFile("/home/liso/notebooks/DL/Zorton/data/game/iso/SN00002.VIP", 0x20, 10000)
 
     for i, frame in enumerate(v[700:3700]):
         plt.imsave(f"frames/frame{i:04}.png", frame)
 
     os.chdir("frames")
-    '''subprocess.call(
+    """subprocess.call(
         [
             "ffmpeg",
             "-i",
@@ -350,63 +410,4 @@ if __name__ == "__main__":
             "libx264",
             "video.mp4",
         ]
-    )'''
-
-    
-    
-    
-maskaras = (
-        (0x00,0x00,0x00,0x00),
-        (0x00,0x1,0x00,0x00),
-        (0x00,0x00,0x1,0x00),
-        (0x00,0x1,0x1,0x00),
-        (0x00,0x00,0x00,0x1),
-        (0x00,0x1,0x00,0x1),
-        (0x00,0x00,0x1,0x1),
-        (0x00,0x1,0x1,0x1),
-        (0x00,0x00,0x00,0x00),
-        (0x1,0x1,0x00,0x00),
-        (0x1,0x00,0x1,0x00),
-        (0x1,0x1,0x1,0x00),
-        (0x1,0x00,0x00,0x1),
-        (0x1,0x1,0x00,0x1),
-        (0x1,0x00,0x1,0x1),
-        (0x1,0x1,0x1,0x1)
-)
-    
-def draw_frame_0b(chunk_id,last_frame):
-    kdata = v.get_chunk(chunk_id)
-    pos = 0
-    vga_pos = 0
-    if kdata[pos] == 0:
-        print("es un 0!!!!")
-        pos+=1
-        while pos<len(kdata):
-            colors = kdata[pos:pos+2]
-            pos+=2
-            maskara = kdata[pos] 
-            pos+=1
-            color = [ colors[i] for i in maskaras[maskara & 0x0f]]
-            color2 = [ colors[i] for i in maskaras[(maskara & 0xf0)>>4]]
-            last_frame[vga_pos:vga_pos+4]=color
-            last_frame[vga_pos+228:vga_pos+228+4]=color2
-            vga_pos+=4
-            if vga_pos%228 == 0:
-                vga_pos+=228
-    else:
-        print("es un 1!!!!")
-        pos+=1
-        while pos<len(kdata):
-            colors = kdata[pos:pos+2]
-            pos+=2
-            maskara = kdata[pos] 
-            pos+=1
-            color = [ colors[i] for i in maskaras[maskara & 0x0f]]
-            color2 = [ colors[i] for i in maskaras[(maskara & 0xf0)>>4]]
-            last_frame[vga_pos:vga_pos+4]=color
-            last_frame[vga_pos+228:vga_pos+228+4]=color2
-            vga_pos+=4
-            if vga_pos%228 == 0:
-                vga_pos+=228
-        
-    
+    )"""
