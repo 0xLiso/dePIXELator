@@ -192,8 +192,8 @@ class VIPFile:
             self.video_width, self.video_height
         )  # 36480
 
-    def draw_frame_type0b(self, chunk_id, last_frame):
-        kdata = v.get_chunk(chunk_id)
+    def draw_frame_type0b(self, frame_id, last_frame):
+        kdata = self.get_chunk(frame_id)
         pos = 0
         vga_pos = 0
         if kdata[pos] == 0:
