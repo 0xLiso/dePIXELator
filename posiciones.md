@@ -224,7 +224,7 @@ bp 0cb4:1037  <- ___PINTA_EN_VGA_FUN_1b12_1037 (no pinta video de vaqueros)
 bp 106E:0481  <-  
 bp 106E:04CA  <-
 bp 1B6E:05CB  <-
-bp 1B6E:06C8  <-
+bp 1B6E:06C8  <- PINTA 0xB  y se llama desde 16B2:128D
 bp 1277:129B  <-
 
 

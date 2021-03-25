@@ -133,9 +133,14 @@ class VIPFile:
             endset = bh.get_type()
             for i, b in enumerate(h):
                 text += f"{b:02x} "
+                    
             if endset in filter_by or len(filter_by) == 0:
                 print(f"{count + init:06}: [{size:>6}]", end=" ")
-                print(f"{text} {endset}")
+                print(f"{text} {endset}", end=" ")
+                if endset=="📼":
+                    r = self.get_chunk(count + init)
+                    print(f"  ->{r[0]}", end=" ")
+                print("")
 
     def show_info_acc(self, init=0, end=-1, filter_by=[]):
         res = []
