@@ -5,6 +5,7 @@ from copy import copy
 
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
 class Chunk:
@@ -27,7 +28,6 @@ class Chunk:
         self.data_position = file.tell()
         file.seek(self.data_size, 1)
         self.fd = file
-        
 
     def get_data(self):
         initial_pos = self.fd.tell()
@@ -81,24 +81,24 @@ class VIPFile:
         self.video_width = 0xE4
         self.analyze_vip_file()
         self.frame = [0] * self.video_width * self.video_height
-        self.maskaras = (
-                    (0,0,0,0),
-            (1,0,0,0),
-            (0,1,0,0),
-            (1,1,0,0),
-            (0,0,1,0),
-            (1,0,1,0),
-            (0,1,1,0),
-            (1,1,1,0),
-            (0,0,0,1),
-            (1,0,0,1),
-            (0,1,0,1),
-            (1,1,0,1),
-            (0,0,1,1),
-            (1,0,1,1),
-            (0,1,1,1),
-            (1,1,1,1)
-            )
+        self.masks = (
+            (0, 0, 0, 0),
+            (1, 0, 0, 0),
+            (0, 1, 0, 0),
+            (1, 1, 0, 0),
+            (0, 0, 1, 0),
+            (1, 0, 1, 0),
+            (0, 1, 1, 0),
+            (1, 1, 1, 0),
+            (0, 0, 0, 1),
+            (1, 0, 0, 1),
+            (0, 1, 0, 1),
+            (1, 1, 0, 1),
+            (0, 0, 1, 1),
+            (1, 0, 1, 1),
+            (0, 1, 1, 1),
+            (1, 1, 1, 1),
+        )
 
     def __del__(self):
         if self.fd:
@@ -134,11 +134,11 @@ class VIPFile:
             endset = bh.get_type()
             for i, b in enumerate(h):
                 text += f"{b:02x} "
-                    
+
             if endset in filter_by or len(filter_by) == 0:
                 print(f"{count + init:06}: [{size:>6}]", end=" ")
                 print(f"{text} {endset}", end=" ")
-                if endset=="📼":
+                if endset == "📼":
                     r = self.get_chunk(count + init)
                     print(f"  ->{r[0]}", end=" ")
                 print("")
@@ -198,48 +198,50 @@ class VIPFile:
 
     def draw_frame_type0b(self, frame_id, last_frameb):
         kdata = self.get_chunk(frame_id)
-        last_frame=list(last_frameb)
+        last_frame = list(last_frameb)
         pos = 0
         vga_pos = 0
         if kdata[pos] == 0:
-            pos+=1
-            while pos<len(kdata):
-                colors = kdata[pos:pos+2]
-                pos+=2
-                maskara = kdata[pos] 
-                pos+=1
-                color = [ colors[i] for i in self.maskaras[maskara & 0x0f]]
-                color2 = [ colors[i] for i in self.maskaras[(maskara & 0xf0)>>4]]
-                last_frame[vga_pos:vga_pos+4]=color
-                last_frame[vga_pos+228:vga_pos+228+4]=color2
-                vga_pos+=4
-                if vga_pos%228 == 0:
-                    vga_pos+=228
+            pos += 1
+            while pos < len(kdata):
+                colors = kdata[pos : pos + 2]
+                pos += 2
+                mask = kdata[pos]
+                pos += 1
+                color = [colors[i] for i in self.masks[mask & 0x0F]]
+                color2 = [colors[i] for i in self.masks[(mask & 0xF0) >> 4]]
+                last_frame[vga_pos : vga_pos + 4] = color
+                last_frame[vga_pos + 228 : vga_pos + 228 + 4] = color2
+                vga_pos += 4
+                if vga_pos % 228 == 0:
+                    vga_pos += 228
         else:
-            data_pos =0x1f3 + 1
+            data_pos = 0x1F3 + 1
             bitmap_pos = 1
-            vga_pos=0
+            vga_pos = 0
             nbits = 0
-            while bitmap_pos<0x1f3+1:
+            while bitmap_pos < 0x1F3 + 1:
                 current_bitmap = kdata[bitmap_pos]
-                bitmap_pos+=1
-                #print(hex(current_bitmap))
-                for bit in format(current_bitmap, '#010b')[2:]:
-                    if bit=="1":
-                        nbits+=1
-                        colors = kdata[data_pos:data_pos+2]
-                        data_pos+=2
-                        maskara = kdata[data_pos] 
-                        data_pos+=1
-                        color = [ colors[i] for i in self.maskaras[maskara & 0x0f]]
-                        color2 = [ colors[i] for i in self.maskaras[(maskara & 0xf0)>>4]]
-                        last_frame[vga_pos:vga_pos+4]=color
-                        last_frame[vga_pos+228:vga_pos+228+4]=color2
-                    vga_pos+=4
-                    if vga_pos%228 == 0:
-                        vga_pos+=228
-                #print(hex(data_pos))
-            #print(nbits)
+                bitmap_pos += 1
+                # print(hex(current_bitmap))
+                for bit in format(current_bitmap, "#010b")[2:]:
+                    if bit == "1":
+                        nbits += 1
+                        colors = kdata[data_pos : data_pos + 2]
+                        data_pos += 2
+                        mask = kdata[data_pos]
+                        data_pos += 1
+                        color = [colors[i] for i in self.masks[mask & 0x0F]]
+                        color2 = [
+                            colors[i] for i in self.masks[(mask & 0xF0) >> 4]
+                        ]
+                        last_frame[vga_pos : vga_pos + 4] = color
+                        last_frame[vga_pos + 228 : vga_pos + 228 + 4] = color2
+                    vga_pos += 4
+                    if vga_pos % 228 == 0:
+                        vga_pos += 228
+                # print(hex(data_pos))
+            # print(nbits)
         return last_frame
 
     def draw_frame_type04(self, frame_id, frame):
@@ -274,7 +276,7 @@ class VIPFile:
 
             num_commands -= 1
         current_line += next_line
-        return last_frame # 31920
+        return last_frame  # 31920
 
     def draw_frame_type05(self, diff_id, last_frame):
         next_line = 0xE4
@@ -328,7 +330,7 @@ class VIPFile:
                 num_parts -= 1
         except Exception as e:
             print(f"Exception!!!!!! en frame id: {diff_id}")
-        
+
         return last_frame
 
     def apply_palette(self, palette, img):
@@ -365,13 +367,13 @@ class VIPFile:
             elif chunk_type in ["🗝️"]:  # 0x04
                 self.frame = self.draw_frame_type04(self.iter_index, self.frame)
             elif chunk_type == "🎬":  # 0x05
-                self.frame = self.draw_frame_type05(  self.iter_index,self.frame)
+                self.frame = self.draw_frame_type05(self.iter_index, self.frame)
             elif chunk_type == "🎞️":  # 0x06
                 self.frame = [0] * self.video_width * self.video_height
             elif chunk_type == "🏂":  # 0x09
                 pass  # Esto se supone que es salto y no hace nada
             elif chunk_type == "📼":  # 0x11
-                self.frame = self.draw_frame_type0b(self.iter_index,self.frame)
+                self.frame = self.draw_frame_type0b(self.iter_index, self.frame)
             elif chunk_type == "❓":  # 0x12
                 pass  # No se que es pero no creo que sea video
             elif chunk_type == "❗":  # 0x13
@@ -407,7 +409,7 @@ if __name__ == "__main__":
     # v = VIPFile("/home/liso/notebooks/DL/Zorton/data/game/iso/SN00002.VIP", 0x0DF5B6A0, 10000)
     v = VIPFile("./SN00002.VIP", 0x20, 10000)
 
-    for i, frame in enumerate(v[0:7700]):
+    for i, frame in tqdm(enumerate(v[0:1000])):
         plt.imsave(f"frames/frame{i:04}.png", frame)
 
     os.chdir("frames")
