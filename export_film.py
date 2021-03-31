@@ -250,16 +250,15 @@ class VIPFile:
         next_line = 0xE4
         current_line = 0
         pos = 0
-        num_commands = 140
-        draw_address = current_line
-        while num_commands != 0:
+        draw_address = 0
+        while pos < len(kdata):
             draw_type = kdata[pos]
             pos += 1
             repetitions = draw_type & 0x7F
             repetitions += 1
 
             # print(f'\t\tS:{desp_linea} T:{cuantas_veces}')
-            if draw_type <= 0x80:
+            if draw_type < 0x80:
                 for _ in range(repetitions):
                     color = kdata[pos]
                     pos += 1
@@ -267,6 +266,7 @@ class VIPFile:
                     last_frame[draw_address] = color
                     draw_address += 1
             else:
+                #MSB == 1 o que es >=0x80
                 color = kdata[pos]
                 pos += 1
                 # print(f'\t\t\tP:{hex(color)}')
@@ -274,8 +274,6 @@ class VIPFile:
                     last_frame[draw_address] = color
                     draw_address += 1
 
-            num_commands -= 1
-        current_line += next_line
         return last_frame  # 31920
 
     def draw_frame_type05(self, diff_id, last_frame):
@@ -309,7 +307,7 @@ class VIPFile:
                         repetitions += 1
 
                         # print(f'\t\tS:{desp_linea} T:{cuantas_veces}')
-                        if draw_type <= 0x80:
+                        if draw_type < 0x80:
                             for _ in range(repetitions):
                                 color = kdata[pos]
                                 pos += 1
@@ -361,7 +359,8 @@ class VIPFile:
                 chunk_type = chunk.get_type()
 
             if chunk_type == "💣":  # 0x00
-                self.frame = [0] * self.video_width * self.video_height
+                self.frame=[1]*228*140
+                pass
             elif chunk_type in ["🖼️"]:  # 0x03
                 self.frame = self.draw_frame_type03(self.iter_index)
             elif chunk_type in ["🗝️"]:  # 0x04
@@ -369,24 +368,30 @@ class VIPFile:
             elif chunk_type == "🎬":  # 0x05
                 self.frame = self.draw_frame_type05(self.iter_index, self.frame)
             elif chunk_type == "🎞️":  # 0x06
+                print(f"tipo 0x06 -> {self.iter_index}")
                 self.frame = [0] * self.video_width * self.video_height
             elif chunk_type == "🏂":  # 0x09
+                print(f"tipo 0x09 -> {self.iter_index}")
                 pass  # Esto se supone que es salto y no hace nada
             elif chunk_type == "📼":  # 0x11
                 self.frame = self.draw_frame_type0b(self.iter_index, self.frame)
             elif chunk_type == "❓":  # 0x12
+                print(f"tipo 0x12 -> {self.iter_index}")
                 pass  # No se que es pero no creo que sea video
             elif chunk_type == "❗":  # 0x13
+                print(f"tipo 0x13 -> {self.iter_index}")
                 pass  # No se que es pero no creo que sea video
             elif chunk_type == "💲":  # 0x14
-                pass  # No se que es pero no creo que sea video
+                #print(f"tipo 0x14 -> {self.iter_index}")
+                pass  # espera N frames que son para solo audio.
+                #ToDo: hacer que devuelva N frames distintos.
             if self.frame is None:
                 raise Exception(f"tipo {chunk_type}, {self.iter_index}")
             self.iter_index += 1
             if chunk_type in ["🎞️"]:  # Nos faltan 2 tipos de frame
                 dirty_pal = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 0, 255)]
-                return self.apply_palette(dirty_pal, self.frame)
-            return self.apply_palette(self.current_palette, self.frame)
+                return self.apply_palette(dirty_pal, self.frame), self.iter_index
+            return self.apply_palette(self.current_palette, self.frame), self.iter_index
         else:
             raise StopIteration
 
@@ -407,10 +412,11 @@ class VIPFile:
 
 if __name__ == "__main__":
     # v = VIPFile("/home/liso/notebooks/DL/Zorton/data/game/iso/SN00002.VIP", 0x0DF5B6A0, 10000)
-    v = VIPFile("./SN00002.VIP", 0x20, 10000)
-
-    for i, frame in tqdm(enumerate(v[0:1000])):
-        plt.imsave(f"frames/frame{i:04}.png", frame)
+    v = VIPFile("./SN00002.VIP", 0x20, 100000)
+    i = 0
+    for  frame,nframe  in tqdm(v):
+        plt.imsave(f"frames/frame{nframe:08}.png", frame)
+        i+=1
 
     os.chdir("frames")
     """subprocess.call(

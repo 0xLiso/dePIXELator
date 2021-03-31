@@ -14,3 +14,10 @@ ffmpeg -i ../../data/hdwestern/Western\ Movies\ Full\ Length\ movies\ 2020\ full
 # frames to video
 
 ffmpeg -framerate 14 -i depixelated_frames/%10d.png depixelated.avi
+
+
+# ToDo:
+Implement an "Enmierdador" ™️ Gracias @BaNenKy ;)
+    - ultralow res
+    - paleta 64colores por escena.
+    
